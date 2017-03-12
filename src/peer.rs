@@ -24,7 +24,7 @@ pub struct PeerUpdate<T> {
     lost: Vec<T>,
 }
 
-impl<T> PeerUpdate<T> 
+impl<T> PeerUpdate<T>
     where T: Ord,
 {
     pub fn new() -> Self {
@@ -98,7 +98,7 @@ impl PeerTransmitter {
             try!(udp.reuse_address(true));
             let socket = try!(udp.bind("0.0.0.0:0"));
             try!(socket.set_broadcast(true));
-            try!(socket.connect(("255.255.255.255", port)));
+            try!(socket.connect(("10.22.71.255", port)));
             socket
         };
         Ok(PeerTransmitter {
@@ -117,7 +117,7 @@ impl PeerTransmitter {
         *enabled = false;
     }
 
-    pub fn transmit<'a, T>(&self, data: &'a T) -> io::Result<()> 
+    pub fn transmit<'a, T>(&self, data: &'a T) -> io::Result<()>
         where T: serde::ser::Serialize,
     {
         let serialized = serde_json::to_string(&data).unwrap();
@@ -150,7 +150,7 @@ impl PeerReceiver {
         let conn = {
             let udp = try!(UdpBuilder::new_v4());
             try!(udp.reuse_address(true));
-            let socket = try!(udp.bind(("255.255.255.255", port)));
+            let socket = try!(udp.bind(("10.22.71.255", port)));
             try!(socket.set_broadcast(true));
             socket
         };
@@ -160,7 +160,7 @@ impl PeerReceiver {
     }
 
     pub fn receive<T>(&self) -> io::Result<T>
-        where T: serde::de::Deserialize, 
+        where T: serde::de::Deserialize,
     {
         let mut buf = [0u8; 256];
         let (amt, _) = try!(self.conn.recv_from(&mut buf));
@@ -175,10 +175,10 @@ impl PeerReceiver {
         loop {
             let mut peer_update = PeerUpdate::new();
             let mut updated = false;
-            
+
             self.conn.set_read_timeout(Some(Duration::new(0, TIMEOUT_NS))).unwrap();
             let new_id: Option<T> = self.receive().ok();
-            
+
             // Adding new connection
             if let Some(id) = new_id {
                 if !last_seen.contains_key(&id) {
@@ -242,4 +242,3 @@ mod tests {
         }
     }
 }
-

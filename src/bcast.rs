@@ -19,7 +19,7 @@ impl BcastTransmitter {
             try!(udp.reuse_address(true));
             let socket = try!(udp.bind("0.0.0.0:0"));
             try!(socket.set_broadcast(true));
-            try!(socket.connect(("255.255.255.255", port)));
+            try!(socket.connect(("10.22.71.255", port)));
             socket
         };
         Ok(BcastTransmitter {
@@ -27,7 +27,7 @@ impl BcastTransmitter {
         })
     }
 
-    pub fn transmit<'a, T>(&self, data: &'a T) -> io::Result<()> 
+    pub fn transmit<'a, T>(&self, data: &'a T) -> io::Result<()>
         where T: serde::ser::Serialize,
     {
         let serialized = serde_json::to_string(&data).unwrap();
@@ -54,7 +54,7 @@ impl BcastReceiver {
         let conn = {
             let udp = try!(UdpBuilder::new_v4());
             try!(udp.reuse_address(true));
-            let socket = try!(udp.bind(("255.255.255.255", port)));
+            let socket = try!(udp.bind(("10.22.71.255", port)));
             try!(socket.set_broadcast(true));
             socket
         };
@@ -63,8 +63,8 @@ impl BcastReceiver {
         })
     }
 
-    pub fn receive<T>(&self) -> io::Result<T> 
-        where T: serde::de::Deserialize, 
+    pub fn receive<T>(&self) -> io::Result<T>
+        where T: serde::de::Deserialize,
     {
         let mut buf = [0u8; 1024];
         let (amt, _) = try!(self.conn.recv_from(&mut buf));
@@ -136,7 +136,7 @@ mod tests {
     fn transmit_customtype_to_receiver() {
         let port = 9999;
         let values = vec![Values::Hello, Values::Integer(4), Values::Float(-3.3)];
-        {   
+        {
             let values = values.clone();
             thread::spawn(move || {
                 let transmitter = BcastTransmitter::new(port).unwrap();
